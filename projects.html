@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>projects | lowpolyphosphorus</title>
+<style>@import url("globals.css");</style>
+</head>
+<body data-fx="off">
+<canvas id="c" tabindex="0"></canvas>
+<script>
+(async function () {
+  var USER = "LowPolyPhosphorus", MAX = 80, LIMIT = 5, TTL = 86400000, KEY = "lpp_projects_v2";
+  var head = [{ t: "h", x: "projects" }, { t: "p", x: "pulled from github, most recently updated first." }];
+  function boot(blocks) {
+    window.PAGE = { id: "projects", blocks: blocks };
+    var s = document.createElement("script");
+    s.src = "site.js";
+    document.body.appendChild(s);
+  }
+  function fromCache(c) {
+    var when = new Date(c.t).toISOString().slice(0, 10);
+    boot(head.concat([{ t: "list", cols: 12, items: c.items }, { t: "dim", x: "last pulled " + when + ". refreshes once a day." }]));
+  }
+  var cached = null;
+  try { cached = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
+  if (cached && cached.items && Date.now() - cached.t < TTL) { fromCache(cached); return; }
+
+  try {
+    var r = await fetch("https://api.github.com/users/" + USER + "/repos?per_page=100&type=owner&sort=pushed");
+    if (!r.ok) throw new Error("repos");
+    var repos = (await r.json()).filter(function (x) { return !x.fork; });
+    repos.sort(function (a, b) { return new Date(b.pushed_at) - new Date(a.pushed_at); });
+    var items = repos.slice(0, LIMIT).map(function (x) {
+      var d = x.description || "no description";
+      if (d.length > MAX) d = d.slice(0, MAX - 1).trimEnd() + "\u2026";
+      return { d: x.pushed_at.slice(0, 10), x: x.name + ": " + d };
+    });
+    var fresh = { t: Date.now(), items: items };
+    try { localStorage.setItem(KEY, JSON.stringify(fresh)); } catch (e) {}
+    fromCache(fresh);
+  } catch (e) {
+    if (cached && cached.items) { fromCache(cached); return; }
+    boot(head.concat([{ t: "dim", x: "couldn't reach github right now." }]));
+  }
+})();
+</script>
+<script src="melt.js"></script>
+</body>
+</html>

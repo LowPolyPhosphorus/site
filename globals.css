@@ -1,0 +1,81 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap");
+
+:root {
+  --char: #0e0c0b;
+  --board: #151110;
+  --trace: #3d2c27;
+  --trace-dim: #2a201d;
+  --flame: #ff5a1f;
+  --snap: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+html {
+  background: var(--char);
+  color-scheme: dark;
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding:
+    max(1.25rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1.25rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  overflow-x: hidden;
+  /* perfboard */
+  background:
+    radial-gradient(circle, var(--trace-dim) 1.2px, transparent 1.7px) 0 0 / 22px 22px,
+    var(--char);
+}
+
+/* the canvas is the board */
+canvas {
+  display: block;
+  box-sizing: border-box;
+  width: min(100%, 46rem);
+  height: 24rem;
+  background-color: var(--board);
+  background-image:
+    radial-gradient(circle, var(--char) 0 3px, var(--trace) 3px 4px, transparent 4px),
+    radial-gradient(circle, var(--char) 0 3px, var(--trace) 3px 4px, transparent 4px),
+    radial-gradient(circle, var(--char) 0 3px, var(--trace) 3px 4px, transparent 4px),
+    radial-gradient(circle, var(--char) 0 3px, var(--trace) 3px 4px, transparent 4px);
+  background-size: 24px 24px;
+  background-repeat: no-repeat;
+  background-position:
+    10px 10px,
+    calc(100% - 10px) 10px,
+    10px calc(100% - 10px),
+    calc(100% - 10px) calc(100% - 10px);
+  border: 1px dashed var(--trace);
+  border-radius: 0;
+  transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.7s var(--snap);
+  animation: power-on 0.9s steps(1, end) both;
+}
+
+body[data-fx="on"] canvas {
+  transition: transform 0.08s linear;
+}
+
+canvas:focus-visible {
+  outline: 1px dashed var(--flame);
+  outline-offset: 6px;
+}
+
+@keyframes power-on {
+  0%   { opacity: 0; }
+  12%  { opacity: 0.9; }
+  18%  { opacity: 0.1; }
+  30%  { opacity: 1; }
+  38%  { opacity: 0.35; }
+  52%  { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  canvas { animation: none; transition-duration: 0.01ms; }
+}

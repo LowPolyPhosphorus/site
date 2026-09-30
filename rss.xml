@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>lowpolyphosphorus</title>
+    <link>https://example.com/</link>
+    <description>building stupid hardware projects and such</description>
+    <language>en</language>
+    <lastBuildDate>Mon, 28 Sep 2026 00:00:00 GMT</lastBuildDate>
+    <!-- add one <item> per post, newest first:
+    <item>
+      <title>post title</title>
+      <link>https://example.com/post-1.html</link>
+      <guid>https://example.com/post-1.html</guid>
+      <pubDate>Mon, 28 Sep 2026 00:00:00 GMT</pubDate>
+      <description>one-line summary</description>
+    </item>
+    -->
+  </channel>
+</rss>
