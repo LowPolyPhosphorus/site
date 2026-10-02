@@ -1,17 +1,41 @@
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap");
 
 :root {
-  --char: #0e0c0b;
-  --board: #151110;
-  --trace: #3d2c27;
-  --trace-dim: #2a201d;
-  --flame: #ff5a1f;
+  /* charred bench, brick board, rust pads */
+  --bench:      #17110f;
+  --bench-dot:  #231915;
+  --board:      #3a211b;
+  --board-edge: #6b3a2b;
+  --hole:       #0e0907;
+  --copper:     #b4552b;
+  --focus:      #e8683a;
   --snap: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* flat SVG shapes (colors baked in: #231915 dot, #b4552b pad, #0e0907 hole) */
+  --dots:  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='11' cy='11' r='1' fill='%23231915'/%3E%3C/svg%3E");
+  --mount: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='12' cy='12' r='5' fill='%23b4552b'/%3E%3Ccircle cx='12' cy='12' r='3' fill='%230e0907'/%3E%3C/svg%3E");
+}
+
+/* light: ash bench, terracotta board */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bench:      #d8d1c8;
+    --bench-dot:  #c8bfb4;
+    --board:      #a4503b;
+    --board-edge: #6c2f22;
+    --hole:       #2b130d;
+    --copper:     #e0944a;
+    --focus:      #8f1d0e;
+
+    /* #c8bfb4 dot, #e0944a pad, #2b130d hole */
+    --dots:  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='11' cy='11' r='1' fill='%23c8bfb4'/%3E%3C/svg%3E");
+    --mount: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='12' cy='12' r='5' fill='%23e0944a'/%3E%3Ccircle cx='12' cy='12' r='3' fill='%232b130d'/%3E%3C/svg%3E");
+  }
 }
 
 html {
-  background: var(--char);
-  color-scheme: dark;
+  background: var(--bench);
+  color-scheme: light dark;
   scrollbar-gutter: stable;
 }
 
@@ -26,24 +50,16 @@ body {
     max(1.25rem, env(safe-area-inset-bottom))
     max(1rem, env(safe-area-inset-left));
   overflow-x: hidden;
-  /* perfboard */
-  background:
-    radial-gradient(circle, var(--trace-dim) 1.2px, transparent 1.7px) 0 0 / 22px 22px,
-    var(--char);
+  background: var(--dots) 0 0 / 22px 22px, var(--bench);
 }
 
-/* the canvas is the board */
 canvas {
   display: block;
   box-sizing: border-box;
   width: min(100%, 46rem);
   height: 24rem;
   background-color: var(--board);
-  background-image:
-    radial-gradient(circle, var(--char) 0 3px, var(--trace) 3px 4px, transparent 4px),
-    radial-gradient(circle, var(--char) 0 3px, var(--trace) 3px 4px, transparent 4px),
-    radial-gradient(circle, var(--char) 0 3px, var(--trace) 3px 4px, transparent 4px),
-    radial-gradient(circle, var(--char) 0 3px, var(--trace) 3px 4px, transparent 4px);
+  background-image: var(--mount), var(--mount), var(--mount), var(--mount);
   background-size: 24px 24px;
   background-repeat: no-repeat;
   background-position:
@@ -51,8 +67,9 @@ canvas {
     calc(100% - 10px) 10px,
     10px calc(100% - 10px),
     calc(100% - 10px) calc(100% - 10px);
-  border: 1px dashed var(--trace);
+  border: 1px solid var(--board-edge);
   border-radius: 0;
+  box-shadow: 0 2px 0 var(--board-edge);
   transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
   transition: transform 0.7s var(--snap);
   animation: power-on 0.9s steps(1, end) both;
@@ -63,7 +80,7 @@ body[data-fx="on"] canvas {
 }
 
 canvas:focus-visible {
-  outline: 1px dashed var(--flame);
+  outline: 2px solid var(--focus);
   outline-offset: 6px;
 }
 

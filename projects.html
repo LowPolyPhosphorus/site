@@ -11,7 +11,7 @@
 <script>
 (async function () {
   var USER = "LowPolyPhosphorus", MAX = 80, LIMIT = 5, TTL = 86400000, KEY = "lpp_projects_v2";
-  var head = [{ t: "h", x: "projects" }, { t: "p", x: "pulled from github, most recently updated first." }];
+  var head = [{ t: "h", x: "projects" }, { t: "p", x: ":3" }];
   function boot(blocks) {
     window.PAGE = { id: "projects", blocks: blocks };
     var s = document.createElement("script");
@@ -20,7 +20,7 @@
   }
   function fromCache(c) {
     var when = new Date(c.t).toISOString().slice(0, 10);
-    boot(head.concat([{ t: "list", cols: 12, items: c.items }, { t: "dim", x: "last pulled " + when + ". refreshes once a day." }]));
+    boot(head.concat([{ t: "list", cols: 12, items: c.items }, { t: "dim", x: "last pulled " + when }]));
   }
   var cached = null;
   try { cached = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}

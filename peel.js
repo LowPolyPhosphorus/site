@@ -9,6 +9,19 @@
   function inZone(x, y) { return x >= W - 64 && y >= H - 64 && x <= W + 8 && y <= H + 8; }
   function lerp(a, b, k) { return a + (b - a) * k; }
 
+  // pull colors from the CSS custom properties so the curl matches the theme
+  function pal() {
+    var cs = getComputedStyle(document.documentElement);
+    function v(name, fb) { return cs.getPropertyValue(name).trim() || fb; }
+    return {
+      bench: v("--bench", "#17110f"),
+      board: v("--board", "#3a211b"),
+      edge:  v("--board-edge", "#6b3a2b"),
+      label: v("--copper", "#b4552b"),
+      hole:  v("--hole", "#0e0907")
+    };
+  }
+
   function clipHalf(poly, M, n) {
     var out = [];
     for (var i = 0; i < poly.length; i++) {
@@ -90,6 +103,7 @@
   }
 
   function draw() {
+    var P = pal();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
     var C = { x: W, y: H };
@@ -100,18 +114,16 @@
     var cut = clipHalf([{ x: 0, y: 0 }, { x: W, y: 0 }, { x: W, y: H }, { x: 0, y: H }], M, n);
     if (cut.length < 3) return;
 
-    // what's under the page
+    // what's under the page: bare bench, flat label, no glow
     ctx.save();
     path(cut);
-    ctx.fillStyle = "#0e0c0b";
+    ctx.fillStyle = P.bench;
     ctx.fill();
     ctx.clip();
     ctx.textAlign = "right";
-    ctx.font = "600 18px 'JetBrains Mono', monospace";
-    ctx.shadowColor = "rgba(255,90,31,0.85)";
-    ctx.shadowBlur = 12 * dpr;
-    ctx.fillStyle = "#ff5a1f";
-    ctx.fillText("somewhere \u2192", W - 20, H - 22);
+    ctx.font = "600 18px 'JetBrains Mono', ui-monospace, monospace";
+    ctx.fillStyle = P.label;
+    ctx.fillText("hi :) \u2192", W - 20, H - 22);
     ctx.restore();
 
     // the lifted part of the page: the real index page, folded over
@@ -119,13 +131,15 @@
       var d = (p.x - M.x) * n.x + (p.y - M.y) * n.y;
       return { x: p.x - 2 * d * n.x, y: p.y - 2 * d * n.y };
     });
+
+    // hard offset shadow, no blur
     ctx.save();
     path(flap);
-    ctx.shadowColor = "rgba(0,0,0,0.7)";
-    ctx.shadowBlur = 16 * dpr;
-    ctx.shadowOffsetX = -n.x * 5 * dpr;
-    ctx.shadowOffsetY = -n.y * 5 * dpr;
-    ctx.fillStyle = "#151110";
+    ctx.shadowColor = "rgba(0,0,0,0.35)";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = -n.x * 3 * dpr;
+    ctx.shadowOffsetY = -n.y * 3 * dpr;
+    ctx.fillStyle = P.board;
     ctx.fill();
     ctx.restore();
 
@@ -134,24 +148,22 @@
     ctx.clip();
     var mn = M.x * n.x + M.y * n.y;
     ctx.transform(1 - 2 * n.x * n.x, -2 * n.x * n.y, -2 * n.x * n.y, 1 - 2 * n.y * n.y, 2 * mn * n.x, 2 * mn * n.y);
-    ctx.fillStyle = "#151110";
+    ctx.fillStyle = P.board;
     ctx.fillRect(0, 0, W, H);
     ctx.drawImage(src, 0, 0, src.width, src.height, 0, 0, W, H);
     ctx.restore();
 
-    // curl shading + edge
+    // curl shading: one flat tint, no gradient
     ctx.save();
     path(flap);
     ctx.clip();
-    var g = ctx.createLinearGradient(M.x, M.y, Pd.x, Pd.y);
-    g.addColorStop(0, "rgba(0,0,0,0.65)");
-    g.addColorStop(0.25, "rgba(0,0,0,0.18)");
-    g.addColorStop(1, "rgba(255,255,255,0.05)");
-    ctx.fillStyle = g;
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
     ctx.fillRect(0, 0, W, H);
     ctx.restore();
+
+    // edge
     path(flap);
-    ctx.strokeStyle = "#3d2c27";
+    ctx.strokeStyle = P.edge;
     ctx.lineWidth = 1;
     ctx.stroke();
   }
