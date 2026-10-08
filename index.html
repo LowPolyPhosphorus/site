@@ -3,14 +3,130 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>lowpolyphosphorus</title>
-<style>@import url("globals.css");</style>
+<title>Work in Progress</title>
+<style>
+:root{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#fff}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+canvas.grabbing{cursor:grabbing}
+</style>
 </head>
-<body data-fx="off">
-<canvas id="c" tabindex="0"></canvas>
-<script>window.PAGE = { id: "home", blocks: [ { t: "hero" }, { t: "p", x: "building stupid hardware projects and such" }, { t: "dim", x: "\"the magic smoke is load-bearing\"" }, { t: "box", x: "if you are truly interested you can find my github, somewhere... not here.", hl: "github" } ] };</script>
-<script src="site.js"></script>
-<script src="peel.js"></script>
-<script src="melt.js"></script>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+<script>
+(function(){
+var renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+document.body.appendChild(renderer.domElement);
+var cv=renderer.domElement;
+var scene=new THREE.Scene();
+var camera=new THREE.PerspectiveCamera(45,1,0.1,100);
+function fit(){
+  var w=innerWidth,h=innerHeight,a=w/h;
+  renderer.setSize(w,h);camera.aspect=a;camera.updateProjectionMatrix();
+  var d=Math.max(15,11/(Math.tan(22.5*Math.PI/180)*a));
+  camera.position.set(0,5.5,d);camera.lookAt(0,3.6,0);
+}
+addEventListener('resize',fit);fit();
+
+scene.add(new THREE.HemisphereLight(0xffffff,0x887766,0.75));
+var sun=new THREE.DirectionalLight(0xffffff,0.9);
+sun.position.set(5,16,10);sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+var sc=sun.shadow.camera;sc.left=-14;sc.right=14;sc.top=14;sc.bottom=-14;sc.near=1;sc.far=45;
+scene.add(sun);
+var floor=new THREE.Mesh(new THREE.PlaneGeometry(60,30),new THREE.ShadowMaterial({opacity:0.28}));
+floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+
+var world=new CANNON.World();
+world.gravity.set(0,-26,0);world.solver.iterations=14;
+var mat=new CANNON.Material();
+world.addContactMaterial(new CANNON.ContactMaterial(mat,mat,{friction:0.45,restitution:0.2}));
+function wall(ax,ang,x,y,z){
+  var b=new CANNON.Body({mass:0,material:mat});b.addShape(new CANNON.Plane());
+  b.quaternion.setFromAxisAngle(new CANNON.Vec3(ax[0],ax[1],ax[2]),ang);
+  b.position.set(x,y,z);world.addBody(b);
+}
+var P=Math.PI;
+wall([1,0,0],-P/2,0,0,0);wall([1,0,0],P/2,0,32,0);
+wall([0,1,0],0,0,0,-2.6);wall([0,1,0],P,0,0,2.6);
+wall([0,1,0],P/2,-10.5,0,0);wall([0,1,0],-P/2,10.5,0,0);
+
+function label(word,w,h,bg,fg){
+  var c=document.createElement('canvas');c.width=1024;c.height=Math.round(1024*h/w);
+  var x=c.getContext('2d');
+  x.fillStyle=bg;x.fillRect(0,0,c.width,c.height);
+  x.strokeStyle=fg;x.globalAlpha=.35;x.lineWidth=8;x.strokeRect(18,18,c.width-36,c.height-36);x.globalAlpha=1;
+  var fs=c.height*0.55;x.font='bold '+fs+'px "Comic Sans MS","Comic Sans","Chalkboard SE","Comic Neue",cursive';
+  var tw=x.measureText(word).width,max=c.width*0.84;
+  if(tw>max){fs*=max/tw;x.font='bold '+fs+'px "Comic Sans MS","Comic Sans","Chalkboard SE","Comic Neue",cursive';}
+  x.fillStyle=fg;x.textAlign='center';x.textBaseline='middle';
+  x.fillText(word,c.width/2,c.height/2+fs*0.04);
+  var t=new THREE.CanvasTexture(c);t.anisotropy=4;return t;
+}
+
+var blocks=[],meshes=[],timers=[];
+function make(word,w,bg,fg,x,y){
+  var h=1.7,d=1.7;
+  var side=new THREE.MeshStandardMaterial({color:bg,roughness:.5});
+  var face=new THREE.MeshStandardMaterial({map:label(word,w,h,bg,fg),roughness:.5});
+  var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),[side,side,side,side,face,face]);
+  m.castShadow=m.receiveShadow=true;scene.add(m);
+  var b=new CANNON.Body({mass:w*1.2,material:mat,linearDamping:.04,angularDamping:.25});
+  b.addShape(new CANNON.Box(new CANNON.Vec3(w/2,h/2,d/2)));
+  b.position.set(x,y,0);
+  b.quaternion.setFromEuler(0,(Math.random()-.5)*.25,(Math.random()-.5)*.2);
+  world.addBody(b);m.userData.body=b;
+  blocks.push({m:m,b:b});meshes.push(m);
+}
+function clear(){
+  timers.forEach(clearTimeout);timers=[];
+  blocks.forEach(function(o){scene.remove(o.m);world.removeBody(o.b);});
+  blocks=[];meshes=[];
+}
+function start(){
+  clear();
+  timers.push(setTimeout(function(){make('progress',7.6,'#e4572e','#fff4e6',-0.4,13);},300));
+  timers.push(setTimeout(function(){make('in',3.6,'#f2e9d8','#2b2622',0.2,13);},1350));
+  timers.push(setTimeout(function(){make('work',5.4,'#2f6f8f','#f2f7fa',0,13);},2400));
+}
+
+var ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),plane=new THREE.Plane(),hit=new THREE.Vector3(),dir=new THREE.Vector3();
+var mouseBody=new CANNON.Body({mass:0});
+mouseBody.collisionFilterGroup=0;mouseBody.collisionFilterMask=0;world.addBody(mouseBody);
+var cons=null;
+function setRay(e){ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(ndc,camera);}
+cv.addEventListener('pointerdown',function(e){
+  setRay(e);var i=ray.intersectObjects(meshes)[0];if(!i)return;
+  cv.setPointerCapture(e.pointerId);cv.classList.add('grabbing');
+  var b=i.object.userData.body,p=i.point;
+  camera.getWorldDirection(dir);plane.setFromNormalAndCoplanarPoint(dir,p);
+  mouseBody.position.set(p.x,p.y,p.z);
+  var local=b.pointToLocalFrame(new CANNON.Vec3(p.x,p.y,p.z));
+  cons=new CANNON.PointToPointConstraint(b,local,mouseBody,new CANNON.Vec3(0,0,0));
+  world.addConstraint(cons);b.wakeUp();
+});
+cv.addEventListener('pointermove',function(e){
+  if(!cons)return;setRay(e);
+  if(ray.ray.intersectPlane(plane,hit)){
+    mouseBody.position.set(Math.max(-9,Math.min(9,hit.x)),Math.max(0.6,Math.min(24,hit.y)),Math.max(-1.5,Math.min(1.5,hit.z)));
+  }
+});
+function drop(){if(cons){world.removeConstraint(cons);cons=null;}cv.classList.remove('grabbing');}
+cv.addEventListener('pointerup',drop);cv.addEventListener('pointercancel',drop);
+
+var last=performance.now();
+function loop(t){
+  requestAnimationFrame(loop);
+  var dt=Math.min((t-last)/1000,0.05);last=t;
+  world.step(1/60,dt,4);
+  blocks.forEach(function(o){o.m.position.copy(o.b.position);o.m.quaternion.copy(o.b.quaternion);});
+  renderer.render(scene,camera);
+}
+start();requestAnimationFrame(loop);
+})();
+</script>
 </body>
 </html>
